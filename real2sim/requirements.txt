@@ -1,0 +1,5 @@
+mediapipe==0.10.35
+opencv-python
+numpy
+mujoco>=3.0.0
+dm-control>=1.0.0

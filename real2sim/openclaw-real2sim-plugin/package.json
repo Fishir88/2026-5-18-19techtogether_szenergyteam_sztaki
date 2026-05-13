@@ -1,0 +1,25 @@
+{
+  "name": "@real2sim/openclaw-real2sim-plugin",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "openclaw": {
+    "extensions": ["./index.ts"],
+    "runtimeExtensions": ["./index.ts"],
+    "install": {
+      "defaultChoice": "local-path"
+    },
+    "compat": {
+      "pluginApi": ">=2026.5.12",
+      "minGatewayVersion": ">=2026.5.12"
+    },
+    "build": {
+      "openclawVersion": "2026.5.12",
+      "pluginSdkVersion": "2026.5.12"
+    }
+  },
+  "dependencies": {
+    "openclaw": "^2026.5.7",
+    "@sinclair/typebox": "^0.34.41"
+  }
+}
