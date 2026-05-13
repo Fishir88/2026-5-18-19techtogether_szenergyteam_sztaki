@@ -156,6 +156,7 @@ Landmark 16  → Right Wrist    (end effector)
 - **left_shoulder_present**, **right_shoulder_present**: visibility confidence (0.0-1.0)
 
 Behavior note:
+- Current arm control limitation: only 2 axes are actively working right now (shoulder roll + elbow).
 - T-pose calibration mode keeps shoulder pitch constant at 0 and changes shoulder roll only.
 - Wrist joints are currently locked at zero in the MuJoCo controller to prevent drift.
 
