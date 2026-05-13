@@ -1,6 +1,6 @@
 # Real2Sim: Human Motion to Robot Simulation
 
-**Status**: ✅ MediaPipe baseline working | 🔄 MuJoCo integration in progress | 🔜 OpenClaw agent ready
+**Status**: ✅ Pose-to-sim loop working | ✅ Shoulder axis remap applied | ✅ OpenClaw plugin integrated
 
 Real2Sim is a system that captures human arm movements via webcam and mimics them in a simulated Unitree G1 humanoid robot. The agent (via OpenClaw) can learn from and control the simulation.
 
@@ -9,28 +9,41 @@ Real2Sim is a system that captures human arm movements via webcam and mimics the
 ### Prerequisites
 
 - **Python 3.12** (MuJoCo + MediaPipe require 3.9+)
-- **Windows PowerShell** (or WSL2 for Linux/Mac)
+- **Terminal shell** (PowerShell, bash, or zsh)
 - **Webcam** (for pose detection)
+- **OpenClaw** (install it if you want the agent/plugin interface)
 
-### 1) Setup Virtual Environment
+### 1) Install OpenClaw
 
-```powershell
-cd "d:\Szabi\SZEnergy\TechTogether OpenClaw\real2sim"
-py -3.12 -m venv venv
-.\venv\Scripts\activate
+Install OpenClaw first if you want to use the agent interface.
+
+If you already have it installed, `setup.ps1` will detect it and merge the local
+Real2Sim plugin into your OpenClaw config automatically.
+
+### 2) Setup Virtual Environment
+
+```sh
+cd "<PROJECT_ROOT>/real2sim"
+python -m venv venv
+<ACTIVATE_VENV_COMMAND>
 ```
 
-If you get an execution policy error:
+If venv activation is blocked by local shell policy, allow local scripts for your current session/user and retry activation.
 
-```powershell
-Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
-```
+### 3) Install Dependencies
 
-### 2) Install Dependencies
+You can do this manually:
 
 ```powershell
 python -m pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
+```
+
+Or run the bundled setup script, which also installs the local OpenClaw plugin
+dependencies and configures OpenClaw when it is installed:
+
+```powershell
+.\setup.ps1
 ```
 
 **Dependencies:**
@@ -40,7 +53,7 @@ pip install -r requirements.txt
 - `mujoco>=3.0.0` - Physics simulation
 - `dm-control>=1.0.0` - Control interface
 
-### 3) Run the System
+### 4) Run the System
 
 **Option A: Basic pose detection only** (no MuJoCo)
 
@@ -69,7 +82,7 @@ python g1_controller.py
 
 Output: MuJoCo simulation of oscillating robot arms (verification test)
 
-### 4) Controls
+### 5) Controls
 
 - **Q** - Exit the program
 - **Camera** - Move your arms in front of webcam
@@ -100,7 +113,7 @@ Human Pose (Camera)
 MediaPipe Pose Detection
        ↓ (33 landmarks)
 Joint Angle Extraction
-       ↓ (elbow, shoulder, wrist)
+       ↓ (elbow + shoulder/hip mapping)
 Real2Sim Bridge
        ↓ (angle mapping)
 G1 MuJoCo Simulation
@@ -134,12 +147,17 @@ Landmark 14  → Right Elbow    (joint)
 Landmark 16  → Right Wrist    (end effector)
 ```
 
-### Output Angles (in degrees)
+### Output Angles (current behavior)
 
-- **left_elbow**: 0° (straight) to 180° (fully bent)
-- **right_elbow**: 0° (straight) to 180° (fully bent)
-- **left_shoulder_present**: visibility confidence (0.0-1.0)
-- **right_shoulder_present**: visibility confidence (0.0-1.0)
+- **left_elbow**, **right_elbow**: MediaPipe elbow bend in degrees (0° to 180°)
+- **left_shoulder_pitch**, **right_shoulder_pitch**: fixed to `0.0` (radians)
+- **left_shoulder_roll**, **right_shoulder_roll**: derived from horizontal shoulder→elbow displacement (`dx * SHOULDER_GAIN`), clipped to `[-2.0, 2.0]` radians
+- **left_hip_pitch**, **right_hip_pitch**: derived from hip→knee vertical displacement, clipped to `[-1.2, 1.2]` radians
+- **left_shoulder_present**, **right_shoulder_present**: visibility confidence (0.0-1.0)
+
+Behavior note:
+- T-pose calibration mode keeps shoulder pitch constant at 0 and changes shoulder roll only.
+- Wrist joints are currently locked at zero in the MuJoCo controller to prevent drift.
 
 ### Confidence Scores
 
@@ -179,16 +197,21 @@ See **[OPENCLAW_INTEGRATION.md](OPENCLAW_INTEGRATION.md)** for:
 
 The OpenClaw plugin package lives in [openclaw-real2sim-plugin](openclaw-real2sim-plugin). It exposes the first-class tools `real2sim_state` and `real2sim_command`.
 
+Current command surface:
+- `real2sim_command` currently accepts elbow commands (`left_elbow`, `right_elbow`) through the plugin.
+- Shoulder and hip values are produced by the local Real2Sim pose pipeline and applied directly in the bridge/controller path.
+
 ### Exact OpenClaw config snippet
 
-Add this to your OpenClaw config (`~/.openclaw/openclaw.json` on Windows at `%USERPROFILE%\\.openclaw\\openclaw.json`):
+Add this to your OpenClaw config at `<OPENCLAW_CONFIG_PATH>`
+(for example: `~/.openclaw/openclaw.json`):
 
 ```json
 {
        "plugins": {
               "entries": {
                      "real2sim": {
-                            "path": "d:/Szabi/SZEnergy/TechTogether OpenClaw/real2sim/openclaw-real2sim-plugin",
+                            "path": "<PROJECT_ROOT>/real2sim/openclaw-real2sim-plugin",
                             "enabled": true,
                             "config": {
                                    "apiBaseUrl": "http://127.0.0.1:8765"
@@ -262,9 +285,8 @@ python -c "import cv2; cap = cv2.VideoCapture(0); print(cap.isOpened())"
 
 **Solution:**
 
-- Windows: Usually works out-of-the-box
-- Linux: May need X11 display: `export DISPLAY=:0`
-- WSL2: Use `wslg` (Windows 11+) or `xvfb`
+- Ensure your environment has GUI/display access enabled for MuJoCo rendering.
+- If running headless, use a virtual display solution (for example, Xvfb).
 
 ### Issue: Slow performance (low FPS)
 
@@ -278,17 +300,17 @@ python -c "import cv2; cap = cv2.VideoCapture(0); print(cap.isOpened())"
 
 **Solution:** Ensure Python 3.12:
 
-```powershell
+```sh
 py -3.12 --version  # Should be 3.12.x
 python --version    # Should also be 3.12.x in venv
 ```
 
 If not, recreate venv:
 
-```powershell
-rm -r venv -Force
-py -3.12 -m venv venv
-.\venv\Scripts\activate
+```sh
+<REMOVE_VENV_COMMAND>
+python -m venv venv
+<ACTIVATE_VENV_COMMAND>
 pip install -r requirements.txt
 ```
 
@@ -342,6 +364,6 @@ pip install -r requirements.txt
 
 ---
 
-**Last Updated**: 2026-05-12  
+**Last Updated**: 2026-05-14  
 **Python**: 3.12  
 **Status**: Ready for agent development
