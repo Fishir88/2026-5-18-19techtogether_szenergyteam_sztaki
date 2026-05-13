@@ -324,30 +324,6 @@ pip install -r requirements.txt
 | Total Latency | ~50-100ms | Human → Robot |
 | Memory | ~500-800MB | With MuJoCo simulation |
 
-## Next Steps
-
-### Phase 1: Baseline ✅
-- [x] MediaPipe pose detection
-- [x] Joint angle extraction
-- [x] Display on video stream
-
-### Phase 2: Simulation 🔄
-- [ ] Full G1 MJCF model import
-- [ ] Complete joint mapping (all 23 DOF)
-- [ ] Gravity compensation
-- [ ] Collision detection
-
-### Phase 3: Agent Learning 🔜
-- [ ] OpenClaw skill creation
-- [ ] Imitation learning (BC)
-- [ ] Reinforcement learning (PPO)
-- [ ] Policy deployment
-
-### Phase 4: Hardware Transfer 🔮
-- [ ] Real G1 robot connection
-- [ ] Sim2Real transfer
-- [ ] Live robot control
-
 ## References
 
 - **MediaPipe**: https://mediapipe.dev/ | Docs: https://developers.google.com/mediapipe
@@ -366,4 +342,3 @@ pip install -r requirements.txt
 
 **Last Updated**: 2026-05-14  
 **Python**: 3.12  
-**Status**: Ready for agent development
