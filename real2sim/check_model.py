@@ -1,6 +1,11 @@
+from pathlib import Path
+
 import mujoco
+
+MODEL_PATH = Path(__file__).resolve().parent / "models" / "Unitree_g1.xml"
+
 try:
-    model = mujoco.MjModel.from_xml_path("Unitree_g1_converted.xml")
+    model = mujoco.MjModel.from_xml_path(str(MODEL_PATH))
     joints = [mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_JOINT, i) for i in range(model.njnt)]
     actuators = [mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_ACTUATOR, i) for i in range(model.nu)]
     print(f"Joints: {joints}")

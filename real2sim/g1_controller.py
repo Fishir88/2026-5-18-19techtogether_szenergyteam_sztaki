@@ -93,6 +93,7 @@ class G1Humanoid:
     def _resolve_model_path(self, explicit_model_path: str = None) -> Path | None:
         """Resolve the best available real G1 model path."""
         candidate_paths: list[Path] = []
+        model_dir = Path(__file__).resolve().parent / "models"
 
         if explicit_model_path:
             candidate_paths.append(Path(explicit_model_path))
@@ -101,11 +102,10 @@ class G1Humanoid:
         if env_model_path:
             candidate_paths.append(Path(env_model_path))
 
-        local_dir = Path(__file__).resolve().parent
         candidate_paths.extend(
             [
-                local_dir / "models" / "Unitree_g1.xml",
-                local_dir / "models" / "Unitree_g1_converted.xml",
+                model_dir / "Unitree_g1.xml",
+                model_dir / "Unitree_g1_converted.xml",
                 Path.cwd() / "Unitree_g1.xml",
                 Path.cwd() / "Unitree_g1_converted.xml",
             ]
